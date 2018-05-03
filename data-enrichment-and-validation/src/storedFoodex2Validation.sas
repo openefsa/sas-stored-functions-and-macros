@@ -408,38 +408,36 @@ the domain hierarchy
 	output /* Where the enriched dataset is created */, 
 	fx2v_foodex2Hierarchy /* OPTIONAL: Hierarchy of the domain */) / store source des="Add MTX information to input dataset";
 
-	proc sql;
-		create table MTX_ENRICH_DATA as
-		select ID, 
-			CODE, 
-
-			/* Add hierarchy information if possible */
-			%if not %isMissing(&fx2v_foodex2Hierarchy.) %then %do;
-
-				/* If hierarchy is MTX, we need to use MASTER as keyword */
-				%if &fx2v_foodex2Hierarchy. = MTX %then %let fx2v_foodex2Hierarchy = MASTER;
-
-				&dom_hierarchy.REPORTABLE as REPORTABLE, 
-				&dom_hierarchy._N_LEVELS as N_LEVELS, 
-				&dom_hierarchy._TERM_LEVEL as TERM_LEVEL, 
-			%end;
-
-			ALLFACETS, 
-			TERMTYPE, 
-			DETAILLEVEL
-
-		from BRS_STG.FOODEX2_HIERARCHIES_DATA;
-	run;
-
 	/* 
 	 * Enrich the dataset with detail level, term type, all facets (MTX attributes) 
 	 * and reportability in the domain hierarchy.
 	 */
 	proc sql;
+
 		create table &output. as
 		select t1.*, mtx.*
-		from MTX_ENRICH_DATA mtx
-			inner join &input. t1 on mtx.CODE = t1.&base_col.;
+		from (
+			select ID, 
+				CODE, 
+
+				/* Add hierarchy information if possible */
+				%if not %isMissing(&fx2v_foodex2Hierarchy.) %then %do;
+
+					/* If hierarchy is MTX, we need to use MASTER as keyword */
+					%if &fx2v_foodex2Hierarchy. = MTX %then %let fx2v_foodex2Hierarchy = MASTER;
+
+					&dom_hierarchy.REPORTABLE as REPORTABLE, 
+					&dom_hierarchy._N_LEVELS as N_LEVELS, 
+					&dom_hierarchy._TERM_LEVEL as TERM_LEVEL, 
+				%end;
+
+				ALLFACETS, 
+				TERMTYPE, 
+				DETAILLEVEL
+
+			from BRS_STG.FOODEX2_HIERARCHIES_DATA) mtx
+
+		inner join &input. t1 on mtx.CODE = t1.&base_col.;
 	run;
 %mend;
 

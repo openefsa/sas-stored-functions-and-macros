@@ -10,6 +10,12 @@
 	run;
 %mend;
 
+%macro deleteTable(t);
+	proc sql;
+		drop table &t.;
+	run;
+%mend;
+
 /* E001 - Single F27 for RPC base term error */
 %macro testSingleF27ForRPCFX01;
 

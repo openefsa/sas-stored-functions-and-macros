@@ -583,6 +583,20 @@ run;
 	%if &value. = %str() or &value. = "" or &value. = . %then 1; %else 0;
 %mend;
 
+/* Append the data to the table. If the table does not exist it will be created */
+%macro DEAV_INT_APPEND_DATA(data, out) / store source des="Append data to out table. If out does not exist it will be created";
+
+	%if %sysfunc(exist(&out.)) %then %do;
+		proc append base=&out. data=&data. force;
+		run;
+	%end;
+	%else %do;
+		data &out.;
+			set &data.;
+		run;
+	%end;
+%mend;
+
 %macro getNobs / store source des="Used in the getNobs FCMP function. Do not use directly!";
 
 	%let tableName = %sysfunc(dequote(&tableName.));
