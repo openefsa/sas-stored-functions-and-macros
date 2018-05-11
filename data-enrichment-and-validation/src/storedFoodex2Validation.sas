@@ -36,6 +36,7 @@ options cmplib=(MSTORE.strings MSTORE.catalogues MSTORE.mtx MSTORE.DEAV MSTORE.F
 	%else %if(&errorCode = "FOODEX2.16") %then "Reporting facets less detailed than the implicit facets is discouraged";
 	%else %if(&errorCode = "FOODEX2.18") %then "The use of ambiguous terms is discouraged";
 	%else %if(&errorCode = "FOODEX2.19") %then "The reported processes cannot be applied to the raw commodity. The existing derivative must be reported.";
+	%else %if(&errorCode = "FOODEX2.20") %then "The reported term cannot be used since it is deprecated.";
 
 	%else %do;
 		%put ERROR: No error label found for error with code = &errorCode.;
@@ -264,7 +265,17 @@ the domain hierarchy
 		%DEAV_INT_ADD_FX2_ERROR("FOODEX2.01", "&foodex_col.", &errorTable., "F27");
 	end;
 
+	/* Check if base term is deprecated */
+	if (isDeprecated(&base_col.)) then do;
+		%DEAV_INT_ADD_FX2_ERROR("FOODEX2.20", "&foodex_col.", &errorTable., &base_col.);
+	end;
+
 	%iterateFacets(MERGED_FACETS, f, h, c)
+
+		/* Check if facet is deprecated */
+		if (isDeprecated(c)) then do;
+			%DEAV_INT_ADD_FX2_ERROR("FOODEX2.20", "&foodex_col.", &errorTable., f);
+		end;
 		
 		/* F01 for mixed derivative error */
 		if (isDerivative(&termTypeCol.) and SOURCE_COMM_COUNT_MERGED > 1 and h = "F01") then do;
@@ -445,42 +456,53 @@ the domain hierarchy
  * This macro evaluates several checks to assess the correctness of
  * a list of FoodEx2 codes.
  */
-%macro DEAV_FOODEX2_VALIDATION(input /* Input table */, 
-		output /* Table where errors and warnings will be put */,
-		fx2v_foodex2Column /* Name of the column which contains the FoodEx2 codes to validate */,
-		fx2v_foodex2Hierarchy /* Optional. Add checks related to a specific hierarchy */) 
+%macro DEAV_FOODEX2_VALIDATION(inputTable= /* Input table */, 
+		outputTable= /* Table where errors and warnings will be put */,
+		foodex2Column= /* Name of the column which contains the FoodEx2 codes to validate */,
+		idColumns= /* List of space separated columns which identify a row of the inputTable */,
+		foodex2Hierarchy= /* Optional. Add checks related to a specific hierarchy */,
+		statistics=0 /* 1=compute performance statistics for the algorithm, 0=no statistics is computed*/) 
 		/ store source des="Validate a list of FoodEx2 codes and returns errors in output";
 
-	proc sql;
-		create table INPUT_DISTINCT as
-		select distinct &fx2v_foodex2Column.
-		from &input;
+	/* Add row identifier */
+	data INPUT_WITH_IDS;
+		set &inputTable.;
+		keep &idColumns. &foodex2Column.;
 	run;
 
+	/* Take distinct set of foodex2 code to save validation time */
+	proc sql noprint;
+		create table INPUT_DISTINCT as
+		select distinct &foodex2Column.
+		from INPUT_WITH_IDS;
+	run;
 
+	/* Split foodex2 code into base term and facets */
 	data INPUT_DISTINCT;
 		set INPUT_DISTINCT;
-		if (^missing(&fx2v_foodex2Column.)) then do;
-			BASE = getBaseTermFromCode(&fx2v_foodex2Column.);
-			EXPLICIT_FACETS = getFacetsFromCode(&fx2v_foodex2Column.);
-			putlog "FOUND BASE " BASE= "and facets" EXPLICIT_FACETS=;
+		if (^missing(&foodex2Column.)) then do;
+			BASE = getBaseTermFromCode(&foodex2Column.);
+			EXPLICIT_FACETS = getFacetsFromCode(&foodex2Column.);
 		end;
 	run;
 
 	/* add mtx information */
-	%DEAV_INT_ADD_MTX_INFO(INPUT_DISTINCT, BASE, INPUT_ENRICHED, &fx2v_foodex2Hierarchy.);
+	%DEAV_INT_ADD_MTX_INFO(INPUT_DISTINCT, BASE, INPUT_ENRICHED, &foodex2Hierarchy.);
 
 	data _null_;
 		nobsInput = getNobs("INPUT_DISTINCT");
 		nobsAfterJoin = getNobs("INPUT_ENRICHED");
 
 		if (nobsInput ^= nobsAfterJoin) then do;
-			putlog 'WARNING: The number of records after join with MTX is different. Input=' nobsInput 'After join=' nobsAfterJoin 'Please check code existance';
+			putlog 'ERROR: Number of records after join with MTX changed. Input=' nobsInput 'After join=' nobsAfterJoin 'Please check code existance';
 		end;
 	run;
 
 	%local errorTable;
-	%let errorTable = ERROR_TABLE;
+	%let errorTable = DEAV_FOODEX2_VALIDATION_ERR;
+
+	/* Delete the error table if already exists */
+	%deleteDataset(&errorTable.);
 
 	%local allFacetsCol;
 	%let allFacetsCol = ALLFACETS;
@@ -491,47 +513,60 @@ the domain hierarchy
 	data FOODEX_VALIDATION_INPUT;
 		set INPUT_ENRICHED nobs=nobs;
 
-		VALIDATION_TIME = time();
+		%if &statistics. %then %do;
+			VALIDATION_TIME = time();
+		%end;
 
-		%DEAV_INT_CLEAN_FACETS(&fx2v_foodex2Column., EXPLICIT_FACETS, ALLFACETS, "&errorTable.", CLEANED_EXPL_FACETS);
-		%DEAV_INT_CHECK_ALL_FACETS_CARD("&fx2v_foodex2Column.", CLEANED_EXPL_FACETS, "&errorTable.", PROCESSABLE);
+		%DEAV_INT_CLEAN_FACETS(&foodex2Column., EXPLICIT_FACETS, ALLFACETS, "&errorTable.", CLEANED_EXPL_FACETS);
+		%DEAV_INT_CHECK_ALL_FACETS_CARD("&foodex2Column.", CLEANED_EXPL_FACETS, "&errorTable.", PROCESSABLE);
 
 		/* If facet cardinality is not correct, do not validate the code since it would produce wrong errors */
 		if PROCESSABLE then do;
 
-			putlog "(" _N_"/" nobs") FoodEx2 validation: processing code " &fx2v_foodex2Column.;
+			putlog "(" _N_"/" nobs") FoodEx2 validation: processing code " &foodex2Column.;
 
-			%DEAV_INT_FX2V_EVAL_ERRORS(&fx2v_foodex2Column., BASE, CLEANED_EXPL_FACETS, &allFacetsCol., 
-					"&errorTable.", "BRS_STG.FOODEX2_19_VALIDATION_CONFIG", "&fx2v_foodex2Hierarchy.");
+			%DEAV_INT_FX2V_EVAL_ERRORS(&foodex2Column., BASE, CLEANED_EXPL_FACETS, &allFacetsCol., 
+					"&errorTable.", "BRS_STG.FOODEX2_19_VALIDATION_CONFIG", "&foodex2Hierarchy.");
 
-			%DEAV_INT_FX2V_EVAL_WARNINGS(&fx2v_foodex2Column., BASE, CLEANED_EXPL_FACETS, &allFacetsCol., "&errorTable.");
+			%DEAV_INT_FX2V_EVAL_WARNINGS(&foodex2Column., BASE, CLEANED_EXPL_FACETS, &allFacetsCol., "&errorTable.");
 		end;
 
-		VALIDATION_TIME = time() - VALIDATION_TIME;
+		%if &statistics. %then %do;
+			VALIDATION_TIME = time() - VALIDATION_TIME;
+		%end;
 	run;
 
 	/* Merge the results in the output table */
-	proc sql;
-		create table &output. as
-		select input.*, e.*
+	proc sql noprint;
+		create table &outputTable. as
+		select input.*, e.ERR_CODE, e.ERR_TYPE, e.ERR_MESSAGE, e.ERR_COLUMN, e.ERR_VALUE
 		from &errorTable. e
-		inner join &input. input
-		on input.&fx2v_foodex2Column. = e.ERR_VALUE;
+		inner join INPUT_WITH_IDS input
+		on input.&foodex2Column. = e.ERR_VALUE;
 	run;
 
-	/* Diagnostic */
-	proc sql;
-		title 'FoodEx2 validation performances';
-		select count(*) as 'Evaluated codes (distinct)'n, 
-			sum(case WHEN PROCESSABLE = 1 THEN 1 ELSE 0 END) as 'Processed codes (valid facets)'n,
-			sum(VALIDATION_TIME) as 'Estimated time (seconds)'n, 
-			avg(VALIDATION_TIME) as 'Average time per code (seconds)'n
-		from FOODEX_VALIDATION_INPUT;
+	data &outputTable.;
+		set &outputTable.;
+		drop &foodex2Column.;
 	run;
 
-	proc sql;
+	%if &statistics. %then %do;
+		/* Diagnostic */
+		proc sql;
+			title 'FoodEx2 validation performances';
+			select count(*) as 'Evaluated codes (distinct)'n, 
+				sum(case WHEN PROCESSABLE = 1 THEN 1 ELSE 0 END) as 'Processed codes (valid facets)'n,
+				sum(VALIDATION_TIME) as 'Estimated time (seconds)'n, 
+				avg(VALIDATION_TIME) as 'Average time per code (seconds)'n
+			from FOODEX_VALIDATION_INPUT;
+		run;
+	%end;
+
+	proc sql noprint;
+		/*drop table FOODEX_VALIDATION_INPUT;*/
 		drop table &errorTable.;
 		drop table INPUT_ENRICHED;
 		drop table INPUT_DISTINCT;
+		drop table INPUT_WITH_IDS;
 	run;
 %mend;

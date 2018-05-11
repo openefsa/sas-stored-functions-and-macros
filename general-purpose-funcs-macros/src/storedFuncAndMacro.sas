@@ -267,8 +267,18 @@ endsub;
 run;
 
 /*
+ * Functions which handle MTX terms properties
+ */
+proc fcmp outlib = MSTORE.mtx.terms;
+function isDeprecated(termCode $);
+	deprecated = input(termCode, imtxDeprecated.);
+	return(deprecated);
+endsub;
+run;
+
+/*
  * Functions which handle facets
-*/
+ */
 proc fcmp outlib = MSTORE.mtx.facets;
 
 /* Extract the base term from a foodex 2 code */
@@ -584,7 +594,7 @@ run;
 %mend;
 
 /* Append the data to the table. If the table does not exist it will be created */
-%macro DEAV_INT_APPEND_DATA(data, out) / store source des="Append data to out table. If out does not exist it will be created";
+%macro appendDataset(data, out) / store source des="Append data to out table. If out does not exist it will be created";
 
 	%if %sysfunc(exist(&out.)) %then %do;
 		proc append base=&out. data=&data. force;
@@ -593,6 +603,14 @@ run;
 	%else %do;
 		data &out.;
 			set &data.;
+		run;
+	%end;
+%mend;
+
+%macro deleteDataset(data) / store source des="Delete a dataset. If dataset does not exist no action is performed";
+	%if %sysfunc(exist(&data.)) %then %do;
+		proc sql;
+			drop table &data.;
 		run;
 	%end;
 %mend;

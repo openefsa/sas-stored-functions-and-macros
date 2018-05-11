@@ -761,13 +761,17 @@ data input;
 	FXCODE = "A0B6Z#F01.A058Y$F01.A16MN$F01.A058Y$F01.A098Y";
 	output;
 
+	resId = "1431432";
+	FXCODE = "A0B6Z#F01.A058Y$F01.A16MN$F01.A058Y$F01.A098Y";
+	output;
+
 	resId = "32132.13";
 	FXCODE = "A0B6Z#F27.A058Y$F27.A16MN$F27.A058Y$F27.A098Y";
 	output;
 run;
 
-%DEAV_FOODEX2_VALIDATION(input, FAILED_RECORDS, FXCODE);
-%deleteTable(input);
+%DEAV_FOODEX2_VALIDATION(inputTable=input, outputTable=FAILED_RECORDS, foodex2Column=FXCODE, statistics=1);
+
 
 data input;
 	resId = "test1";

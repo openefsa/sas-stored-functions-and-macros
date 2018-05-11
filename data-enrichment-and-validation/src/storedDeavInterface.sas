@@ -46,20 +46,61 @@ options mstored sasmstore=MSTORE;
 	run;
 
 	/* Transpose the enriched columns */
-	proc transpose data=DEAV_ENRICHED_COLS out=T_DEAV_ENRICHED_COLS(rename=(col1=COL_VALUE)) name=COL_NAME;
+	proc transpose data=DEAV_ENRICHED_COLS out=T_DEAV_ENRICHED_COLS(rename=(col1=VALUE)) name=F_C_NAME;
 		by &dcfId. &datasetId.;
 		var &enrichedCols.;
 	run;
 
+	%local maxId;
+	%let maxId = 0;
+
 	/* If already present, remove it since it will be replaced */
 	%if %sysfunc(exist(&oracleTable.)) %then %do;
+
+		/* Get max to set new IDs for the new rows */
 		proc sql;
-			delete from &oracleTable. where &datasetId. in (select distinct &datasetId. from &inputTable);
+			select max(ID) into :maxId from &oracleTable.;
+		run;
+
+		/* Delete old rows if related to the same dataset */
+		proc sql;
+			delete from &oracleTable.
+			where &datasetId. in (select distinct &datasetId. from &inputTable)
+				and F_C_NAME in (
+					%let i = 1;
+					%do %while (%scan(&enrichedCols., &i., %str( ))^=%str());
+						%let col = %scan(&enrichedCols., &i., %str( ));
+						"&col."
+						
+						%let i = %eval(&i. + 1);
+
+						%if %scan(&enrichedCols., &i., %str( ))^=%str() %then ,;
+					%end;
+				);
 		run;
 	%end;
 
+	/* Add additional columns. NOTE THAT THIS DOES NOT SUPPORT COMPOUND FIELDS!
+	 * EDIT THIS PART OF CODE IN ORDER TO MAKE IT COMPATIBLE WITH COMPOUNDS.
+	 * In particular it is necessary to split compound fields into several records
+	 * , to assign different sorting and attr_name. */
+	data T_DEAV_ENRICHED_COLS;
+
+		retain ID F_ID F_C_NAME ATTR_NAME VALUE SORTING DATASET_ID;
+
+		set T_DEAV_ENRICHED_COLS (rename=(&dcfId.=F_ID &datasetId.=DATASET_ID));
+
+		ID = _N_ + &maxId.;
+		
+		length ATTR_NAME $4000;
+		SORTING = 1;
+
+		label ID = 'Row id' F_ID = 'Dcf id' F_C_NAME = 'Column name' ATTR_NAME = 'Attribute name for compounds'
+			VALUE = 'Column/attribute value' SORTING = 'Order of application of compound attributes' DATASET_ID = 'Dataset id';
+	run;
+
 	/* Append transposed data to oracle table */
-	%DEAV_INT_APPEND_DATA(T_DEAV_ENRICHED_COLS, &oracleTable.);
+	%appendDataset(T_DEAV_ENRICHED_COLS, &oracleTable.);
 	
 	/* Delete temporary tables */
 	proc sql;
@@ -131,7 +172,8 @@ options mstored sasmstore=MSTORE;
 			%if &foodex2Column. ^= %str() %then %do;
 
 				%put NOTE: Validating FoodEx2 column = &foodex2Column.;
-				%DEAV_FOODEX2_VALIDATION(&inputTable., &outputTable., &foodex2Column., &foodex2Hierarchy.);
+				%DEAV_FOODEX2_VALIDATION(inputTable=&inputTable., outputTable=&outputTable., idColumns=&dcfId. &datasetId.,
+					foodex2Column=&foodex2Column., foodex2Hierarchy=&foodex2Hierarchy.);
 			%end;
 			%else %put ERROR: Cannot validate FoodEx2, missing parameter foodex2Column;
 		%end;
@@ -147,7 +189,8 @@ options mstored sasmstore=MSTORE;
 				%put NOTE: Mapping FoodEx2 column = &foodex2Column. to matrix column = &matrixColumn.;
 				%let enrichedCols = &matrixColumn.;
 	
-				%DEAV_FOODEX2_TO_MATRIX(&inputTable., &outputTable., &foodex2Column., &matrixColumn.);
+				%DEAV_FOODEX2_TO_MATRIX(inputTable=&inputTable., outputTable=&outputTable., 
+					foodex2Column=&foodex2Column., matrixColumn=&matrixColumn., idColumns=&dcfId. &datasetId.);
 			%end;
 			%else %put ERROR: Cannot map FoodEx2 to matrix, either foodex2Column or matrixColumn is missing. Found FoodEx = &foodex2Column. Matrix = &matrixColumn.;
 		%end;
@@ -163,7 +206,7 @@ options mstored sasmstore=MSTORE;
 
 		/* If valid macro call for enrichment, append/create table also in ORACLE */
 		%if &isValid. and &enrichedCols. ^= %str() %then %do;
-			%DEAV_INT_MOVE_TO_ORACLE(inputTable=&inputTable., oracleTable=DUMMY_ORACLE_TABLE,
+			%DEAV_INT_MOVE_TO_ORACLE(inputTable=&inputTable., oracleTable=DEAV_ENRICHMENT_TABLE,
 					dcfId=&dcfId., datasetId=&datasetId., enrichedCols=&enrichedCols.);
 		%end;
 	%end;
