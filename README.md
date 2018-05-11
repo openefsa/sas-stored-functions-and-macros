@@ -863,7 +863,7 @@ Removes the facets which are repeated twice for the same facet category, in orde
 
 **Returns:**
 
-  A distinct facets list extracted from the *facets* string, $-separated*.*
+  A distinct facets list extracted from the *facets* string, $-separated.
   
 
 **Dependencies:**
@@ -917,7 +917,7 @@ Count the number of source commodities inside the facets.
 
     function countFacetsNotChildOfImplicit(facets $, implicitFacets $, facetHeader $)
 
-Counts the number of facets inside the *facets* string with header *facetHeader* which are **not** descendant of the facets contained in the *implicitFacets* string*.* This is helpful for validation purposes, where it is needed to check if the explicit facets are actually descendant of the implicit facet, or not. Note that the term relationships are evaluated in the facet hierarchies identified by the header of the facet (e.g. facets with header F01 are checked in the source hierarchy of the MTX). Note also that in case of multiple implicit facets for the same facet category, the term should not be a descendant of all the implicit facets, in order to be counted.
+Counts the number of facets inside the *facets* string with header *facetHeader* which are **not** descendant of the facets contained in the *implicitFacets* string. This is helpful for validation purposes, where it is needed to check if the explicit facets are actually descendant of the implicit facet, or not. Note that the term relationships are evaluated in the facet hierarchies identified by the header of the facet (e.g. facets with header F01 are checked in the source hierarchy of the MTX). Note also that in case of multiple implicit facets for the same facet category, the term should not be a descendant of all the implicit facets, in order to be counted.
 
 **Parameters:**
 
@@ -928,7 +928,7 @@ Counts the number of facets inside the *facets* string with header *facetHeader*
 
 **Returns:**
 
-  The number of facets inside the *facets* string with the target *facetHeader* which are not descendant of the implicit facets*.*
+  The number of facets inside the *facets* string with the target *facetHeader* which are not descendant of the implicit facets.
   
 
 **Dependencies:**
@@ -953,7 +953,7 @@ F27.A026V Fish (meat) is not a child of the implicit F27.A02BT Cods, hakes, hadd
 
     function getExplicitNotChildOfImplicit(facets $, implicitFacets $, facetHeader $)$4000
 
-Extracts the facets inside the *explicits* string with header *facetHeader* which are **not** descendant of the facets contained in the *implicits* string*.* Note that the term relationships are evaluated in the facet hierarchies identified by the header of the facet (e.g. facets with header F01 are checked in the source hierarchy of the MTX). Note also that in case of multiple implicit facets for the same facet category, the term should not be a descendant of all the implicit facets, in order to be put in output.
+Extracts the facets inside the *explicits* string with header *facetHeader* which are **not** descendant of the facets contained in the *implicits* string. Note that the term relationships are evaluated in the facet hierarchies identified by the header of the facet (e.g. facets with header F01 are checked in the source hierarchy of the MTX). Note also that in case of multiple implicit facets for the same facet category, the term should not be a descendant of all the implicit facets, in order to be put in output.
 
 **Parameters:**
 
@@ -964,7 +964,7 @@ Extracts the facets inside the *explicits* string with header *facetHeader* whic
 
 **Returns:**
 
-  The facets inside the *facets* string with the target *facetHeader* which are not descendant of the implicit facets, $-separated*.*
+  The facets inside the *facets* string with the target *facetHeader* which are not descendant of the implicit facets, $-separated.
   
 
 **Dependencies:**
