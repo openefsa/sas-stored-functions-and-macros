@@ -868,7 +868,7 @@ Removes the facets which are repeated twice for the same facet category, in orde
 
 **Dependencies:**
 
-  Requires stored macro to be correctly executed. See [Macros](#macros) ****for further details.
+  Requires stored macro to be correctly executed. See [Macros](#macros) for further details.
   
 
 **Examples:**
