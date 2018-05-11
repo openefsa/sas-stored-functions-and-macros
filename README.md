@@ -440,7 +440,7 @@ Returns the code of an hierarchy of type “attribute” starting from the attri
 
 **Dependencies:**
 
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
+  Requires stored macro to be correctly executed. See [Macros](#macros) for further details.
 
 **Examples:**
 
@@ -607,7 +607,7 @@ Checks if an attribute is repeatable or not, that is, if it can contain several 
 
 **Dependencies:**
 
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
+  Requires stored macro to be correctly executed. See [Macros](#macros) for further details.
   
 
 **Examples:**
@@ -839,7 +839,7 @@ Extracts every facet header of the MTX catalogue.
 
 **Dependencies:**
 
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
+  Requires stored macro to be correctly executed. See [Macros](#macros) for further details.
   
 
 **Examples:**
@@ -868,7 +868,7 @@ Removes the facets which are repeated twice for the same facet category, in orde
 
 **Dependencies:**
 
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) ****for further details.
+  Requires stored macro to be correctly executed. See [Macros](#macros) ****for further details.
   
 
 **Examples:**
@@ -900,7 +900,7 @@ Counts the number of facets in the *facets* string which have as header the spec
 
 **Dependencies:**
 
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
+  Requires stored macro to be correctly executed. See [Macros](#macros) for further details.
   
 
 **Examples:**
@@ -934,7 +934,7 @@ Counts the number of facets inside the *facets* string with header *facetHeader*
 **Dependencies:**
 
   Requires MSTORE.catalogues package to be loaded.
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
+  Requires stored macro to be correctly executed. See [Macros](#macros) for further details.
   
 
 **Examples:**
@@ -970,7 +970,7 @@ Extracts the facets inside the *explicits* string with header *facetHeader* whic
 **Dependencies:**
 
   Requires MSTORE.catalogues package to be loaded.
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
+  Requires stored macro to be correctly executed. See [Macros](#macros) for further details.
   
 
 **Examples:**
@@ -1005,7 +1005,7 @@ Checks if the cardinality of the facets with header *facetHeader* is respected o
 **Dependencies:**
 
   Requires MSTORE.catalogues package to be loaded
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
+  Requires stored macro to be correctly executed. See [Macros](#macros) for further details.
   
 
 **Examples:**
@@ -1046,7 +1046,7 @@ Extracts from the *facets* string the facet which have the selected facet catego
 
 **Dependencies:**
 
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
+  Requires stored macro to be correctly executed. See [Macros](#macros) for further details.
   
 
 **Examples:**
@@ -1079,7 +1079,7 @@ Removes the **not** repeatable explicit facets which are ancestors of the implic
 **Dependencies:**
 
   Requires MSTORE.catalogues and MSTORE.strings packages to be loaded
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
+  Requires stored macro to be correctly executed. See [Macros](#macros) for further details.
   
 
 **Examples:**
@@ -1112,7 +1112,7 @@ Merges the explicit facets with the implicit facets. In particular, if an explic
 **Dependencies:**
 
   Requires MSTORE.catalogues and MSTORE.strings packages to be loaded
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
+  Requires stored macro to be correctly executed. See [Macros](#macros) for further details.
   
 
 **Examples:**
