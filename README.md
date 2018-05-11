@@ -61,6 +61,7 @@ Works as the String Tokenizer macro, but it provides an improved interface to pa
   
 
 **Examples:**
+
 This will print inside the log a line for each facet with the facet information:
 
     data _null_;
@@ -130,6 +131,7 @@ Asserts that the dataset passed as input exists, it gives an error in the SAS lo
   
 
 **Examples:**
+
 Example of false assertion:
 
     %assertExists("AAA");  /* This will print an error in the log */
@@ -154,6 +156,7 @@ Asserts that the dataset passed as input does not exist, it gives an error in th
   
 
 **Examples:**
+
 Example of true assertion:
 
     %assertNotExists("AAA");  /* OK, no error is printed */
@@ -219,6 +222,7 @@ Asserts that the number of rows of the *dataset* is equal to the *expectedNum*, 
   
 
 **Examples:**
+
 Example of true assertion:
 
     data AAA;
@@ -391,8 +395,9 @@ Creates an empty data enrichment and validation error table. The error table str
 A single error can create multiple rows (with same ROW_ID, ERR_CODE, ERR_TYPE, ERR_MESSAGE but different ERR_COLUMN with its own ERR_VALUE). This is used to have a table which can accommodate a dynamic set of erroneous columns.
 
 **Parameters:**
+	
+errorTable - name of the table which will be created
 
-  errorTable - name of the table which will be created
 ----------
 # **Functions**
 
@@ -480,6 +485,7 @@ Returns the code of a term which is ancestor of the *term* specified in the inpu
   
 
 **Examples:**
+
 Get root ancestor of Barley grain, pearled in the reporting hierarchy :
 
     data _null_;
@@ -535,6 +541,7 @@ Returns a string containing the whole set of ancestors (dash-separated) of the s
   
 
 **Examples:**
+
 Get ancestors of Barley grain, pearled in the reporting hierarchy:
 
     data _null_;
@@ -572,6 +579,7 @@ Checks if the *term* is a descendant of the *target* term in the considered *hie
   
 
 **Examples:**
+
 Check if "Cereal grains (and cereal-like grains)" is ancestor of "Barley grain, pearled”:
 
     data _null_;
@@ -603,6 +611,7 @@ Checks if an attribute is repeatable or not, that is, if it can contain several 
   
 
 **Examples:**
+
 Check if the source commodities attribute (F27) of the FoodEx2 catalogue (MTX) is repeatable:
 
     data _null_;
@@ -629,6 +638,7 @@ Checks if the detail level of a term is correspondent to an hierarchy. More prec
 **Returns:**
 
   1 if *detailLevel* = ‘H’ 0 otherwise.
+
 ----------
 ## **isDerivative**
 
@@ -644,7 +654,8 @@ Checks if the type of term of a term is correspondent to a derivative. More prec
 
 **Returns:**
 
-  1 if *termType*= ‘d’ 0 otherwise.
+   1 if *termType*= ‘d’ 0 otherwise.
+
 ----------
 ## **isComposite**
 
@@ -661,6 +672,7 @@ Checks if the type of term of a term is correspondent to a composite. More preci
 **Returns:**
 
   1 if *termType*= ‘c’ or *termType=’s’,* 0 otherwise.
+
 ----------
 ## **isRPC**
   
@@ -676,6 +688,7 @@ Checks if the type of term of a term is correspondent to a raw primary commodity
 **Returns:**
 
   1 if *termType*= ‘r’ 0 otherwise.
+
 ----------
 ## **isFacet**
 
@@ -692,6 +705,7 @@ Checks if the type of term of a term is correspondent to a facet. More precisely
 **Returns:**
 
   1 if *termType*= ‘f’ 0 otherwise.
+
 ----------
 ## **isNonSpecific**
 
@@ -713,6 +727,7 @@ Checks if the detail level of the FoodEx2 term is correspondent to non-specific.
 **Returns:**
 
   1 if the detail level is ‘P’, 0 otherwise.
+
 ----------
 ## **getBaseTermFromCode**
 
@@ -824,7 +839,7 @@ Extracts every facet header of the MTX catalogue.
 
 **Dependencies:**
 
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) ****for further details.
+  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
   
 
 **Examples:**
@@ -857,6 +872,7 @@ Removes the facets which are repeated twice for the same facet category, in orde
   
 
 **Examples:**
+
 The F27.A026V facet is repeated, therefore the duplicate will be removed.
 
     data _null_;
@@ -884,10 +900,11 @@ Counts the number of facets in the *facets* string which have as header the spec
 
 **Dependencies:**
 
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) ****for further details.
+  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
   
 
 **Examples:**
+
 Count the number of source commodities inside the facets.
 
     data _null_;
@@ -917,10 +934,11 @@ Counts the number of facets inside the *facets* string with header *facetHeader*
 **Dependencies:**
 
   Requires MSTORE.catalogues package to be loaded.
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) ****for further details.
+  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
   
 
 **Examples:**
+
 F27.A026V Fish (meat) is not a child of the implicit F27.A02BT Cods, hakes, haddocks, therefore it will be counted.
 
     data _null_;
@@ -952,10 +970,11 @@ Extracts the facets inside the *explicits* string with header *facetHeader* whic
 **Dependencies:**
 
   Requires MSTORE.catalogues package to be loaded.
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) ****for further details.
+  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
   
 
 **Examples:**
+
 F27.A026V Fish (meat) is not a child of the implicit F27.A02BT Cods, hakes, haddocks, therefore it will be put in output.
 
     data _null_;
@@ -986,10 +1005,11 @@ Checks if the cardinality of the facets with header *facetHeader* is respected o
 **Dependencies:**
 
   Requires MSTORE.catalogues package to be loaded
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) ****for further details.
+  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
   
 
 **Examples:**
+
 Source commodity is repeatable and therefore it is possible to specify more than one F27:
 
     data _null_;
@@ -1026,10 +1046,11 @@ Extracts from the *facets* string the facet which have the selected facet catego
 
 **Dependencies:**
 
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) ****for further details.
+  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
   
 
 **Examples:**
+
 Get only the F27 facets:
 
     data _null_;
@@ -1058,10 +1079,11 @@ Removes the **not** repeatable explicit facets which are ancestors of the implic
 **Dependencies:**
 
   Requires MSTORE.catalogues and MSTORE.strings packages to be loaded
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) ****for further details.
+  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
   
 
 **Examples:**
+
 The explicit facet F01.A059A Amaranth (as plant) is ancestor of the implicit F01.A0E0E Chinese amaranth (as plant) in the SOURCE hierarchy and therefore it will be removed. Note that this happens only because the F01 facet is **not** repeatable!
 
     data _null_;
@@ -1090,10 +1112,11 @@ Merges the explicit facets with the implicit facets. In particular, if an explic
 **Dependencies:**
 
   Requires MSTORE.catalogues and MSTORE.strings packages to be loaded
-  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) ****for further details.
+  Requires stored macro to be correctly executed. See [Macros](/doc/EFSA-SAS-Stored-Macros-and-Functions-MSTORE-P017ytITZSy2CCuODiZCw#:uid=833430773953855944946168&h2=Macros) for further details.
   
 
 **Examples:**
+
 The explicit facet F01.A0E0E Chinese amaranth (as plant) is ancestor of the implicit A059A Amaranth (as plant) in the SOURCE hierarchy and therefore it will not be included in the output:
 
     data _null_;
@@ -1139,6 +1162,7 @@ This package contains handy functions for managing tables.
     function getNobs(tableName $)
 
 Returns the number of observations of a table.
+
 **Parameters:**
 
   tableName - name of the table (with library name included)
@@ -1212,7 +1236,6 @@ Removes a set of elements from a list of elements separated by a specific separa
 
 **Examples:**
 
-
     data _null_;
       source = "ABC$GBHDSH$SHEH$NBNBNB";
       rm = "ABC$SHEH";
@@ -1240,6 +1263,7 @@ Returns true if the MTX term is a generic term.
 **Returns:**
 
   True if the term is a generic term. A generic term is identified by the following list: "A0C0R", "A0CHR", "A0CHS”
+
 ----------
 ## **isAmbiguous**
 
@@ -1256,6 +1280,7 @@ Returns true if the MTX term is an ambiguous term.
 **Returns:**
 
   True if the term is an ambiguous term. An ambiguous term is identified by the following list: “A00HQ”
+
 ----------
 ## **getForbiddenProcesses**
 
@@ -1284,6 +1309,7 @@ Returns a list containing the forbidden processes (facet F28) which cannot be ap
   
 
 **Examples:**
+
 Get the forbidden processes of the term “A000A” in the reporting hierarchy.
 
     data _null;
@@ -1317,6 +1343,7 @@ Returns the group root defined in the configuration if the *processes* list cont
   
 
 **Examples:**
+
 Check if it is possible to add the A07KG Drying (dehydratation) to A011Y Legumes fresh seeds (beans, peas etc.).
 
     data _null;
@@ -1379,6 +1406,7 @@ In the following there are presented the custom formats which were created for E
 Converts the code of an MTX term into a flag which identifies if the term is deprecated or not.
 
 **Dependencies:**
+
 Requires BRS_STG format library to be loaded.
 
     options fmtsearch=(BRS_STG); /* Required to use BR formats for parents */
@@ -1398,6 +1426,7 @@ Requires BRS_STG format library to be loaded.
 Converts the code of an MTX term into a character which identifies its detail level.
 
 **Dependencies:**
+
 Requires BRS_STG format library to be loaded.
 
     options fmtsearch=(BRS_STG); /* Required to use BR formats for parents */
