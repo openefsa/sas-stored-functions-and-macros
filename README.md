@@ -1421,7 +1421,7 @@ Requires BRS_STG format library to be loaded.
 ## **MTX Detail level format**
 
 
-    imtxDetailLevel.
+    $imtxDetailLevel.
 
 Converts the code of an MTX term into a character which identifies its detail level.
 
