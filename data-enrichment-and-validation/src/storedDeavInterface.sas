@@ -206,7 +206,7 @@ options mstored sasmstore=MSTORE;
 
 		/* If valid macro call for enrichment, append/create table also in ORACLE */
 		%if &isValid. and &enrichedCols. ^= %str() %then %do;
-			%DEAV_INT_MOVE_TO_ORACLE(inputTable=&inputTable., oracleTable=DEAV_ENRICHMENT_TABLE,
+			%DEAV_INT_MOVE_TO_ORACLE(inputTable=&inputTable., oracleTable=ODS.DEAV_ENRICHMENT_TABLE,
 					dcfId=&dcfId., datasetId=&datasetId., enrichedCols=&enrichedCols.);
 		%end;
 	%end;

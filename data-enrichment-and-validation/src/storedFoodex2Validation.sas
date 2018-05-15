@@ -25,7 +25,7 @@ options cmplib=(MSTORE.strings MSTORE.catalogues MSTORE.mtx MSTORE.DEAV MSTORE.F
 	%else %if(&errorCode = "FOODEX2.07") %then "Reporting more than one facet is forbidden for this category";
 	%else %if(&errorCode = "FOODEX2.17") %then "Reporting a facet as base term is forbidden";
 
-	%else %if(&errorCode = "FOODEX2.08") %then "The use of not reportable base term is forbidden";
+	%else %if(&errorCode = "FOODEX2.08") %then "The use of not reportable terms is forbidden";
 	%else %if(&errorCode = "FOODEX2.09") %then "The use of hierarchies as base term is discouraged";
 	%else %if(&errorCode = "FOODEX2.10") %then "The use of non-specific terms is discouraged";
 	%else %if(&errorCode = "FOODEX2.11") %then "The use of generic terms is discouraged";
@@ -296,6 +296,7 @@ the domain hierarchy
 		if (isDerivative(&termTypeCol.) and SOURCE_COMM_COUNT_MERGED = 0 and h = "F01") then do;
 			%DEAV_INT_ADD_FX2_ERROR("FOODEX2.06", "&foodex_col.", &errorTable., f);
 		end;
+
 	%endIterateFacets
 
 	/* FOODEX2.05 check if the source commodities are children of the implicit one (if present) */
@@ -310,11 +311,16 @@ the domain hierarchy
 		%let hierarchy = %sysfunc(dequote(&hierarchy.));
 
 		/* Only for the base term and if a hierarchy was selected */
-		if REPORTABLE = 0 then do;
+		if isReportable(&base_col., "&hierarchy.") then do;
 			%DEAV_INT_ADD_FX2_ERROR("FOODEX2.08", "&foodex_col.", &errorTable., &base_col.);
 		end;
 
-		MERGED_FACETS = addImplicitFacets(&facets_col., &implicit_facets_col.);
+		/* Check reportability of explicit facets in their hierarchies */
+		%iterateFacets(&facets_col., f, h, c)
+			if isReportable(c, getHierarchyByAttributeCode("MTX", h)) then do;
+				%DEAV_INT_ADD_FX2_ERROR("FOODEX2.08", "&foodex_col.", &errorTable., f);
+			end;
+		%endIterateFacets
 
 		/* check forbidden processes for raw commodities */
 		if (isRPC(&termTypeCol.)) then do;
@@ -417,7 +423,7 @@ the domain hierarchy
 %macro DEAV_INT_ADD_MTX_INFO(input /* Input dataset with a column named BASE (id of base terms) */, 
 	base_col /* column which contains the base term code */,
 	output /* Where the enriched dataset is created */, 
-	fx2v_foodex2Hierarchy /* OPTIONAL: Hierarchy of the domain */) / store source des="Add MTX information to input dataset";
+	foodex2Hierarchy /* OPTIONAL: Hierarchy of the domain */) / store source des="Add MTX information to input dataset";
 
 	/* 
 	 * Enrich the dataset with detail level, term type, all facets (MTX attributes) 
@@ -432,14 +438,14 @@ the domain hierarchy
 				CODE, 
 
 				/* Add hierarchy information if possible */
-				%if not %isMissing(&fx2v_foodex2Hierarchy.) %then %do;
+				%if not %isMissing(&foodex2Hierarchy.) %then %do;
 
 					/* If hierarchy is MTX, we need to use MASTER as keyword */
-					%if &fx2v_foodex2Hierarchy. = MTX %then %let fx2v_foodex2Hierarchy = MASTER;
+					%if &foodex2Hierarchy. = MTX %then %let foodex2Hierarchy = MASTER;
 
-					&dom_hierarchy.REPORTABLE as REPORTABLE, 
-					&dom_hierarchy._N_LEVELS as N_LEVELS, 
-					&dom_hierarchy._TERM_LEVEL as TERM_LEVEL, 
+					&foodex2Hierarchy.REPORTABLE as REPORTABLE, 
+					&foodex2Hierarchy._N_LEVELS as N_LEVELS, 
+					&foodex2Hierarchy._TERM_LEVEL as TERM_LEVEL, 
 				%end;
 
 				ALLFACETS, 
