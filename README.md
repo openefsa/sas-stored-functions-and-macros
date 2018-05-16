@@ -316,17 +316,25 @@ It maps the “FX2” FoodEx2 column of the MY_DATA dataset into matrix codes wh
 ## **DEAV_FOODEX2_VALIDATION**
 
 
-    %macro DEAV_FOODEX2_VALIDATION(inputTable=, outputTable=, idColumns=, foodex2Column=, foodex2Hierarchy=, statistics=0)
+    %macro DEAV_FOODEX2_VALIDATION(inputTable=, outputTable=, idColumns=, foodex2Column=, foodex2Hierarchy=, checkReportability=0, checkDeprecated=0, statistics=0)
 
 Validates a set of FoodEx2 codes and returns the errors/warnings.
 
 **Parameters:**
 
   inputTable - Input table containing the data to validate
+
   outputTable - Output table which will contain the detected errors. This table will be created by the algorithm.
+
   idColumns - List of space separated columns names which specify the fields which identify a row of the *inputTable.*
   foodex2Column - The name of the column of *input* containing the FoodEx2 code to validate
+  
   foodex2Hierarchy - Optional parameter, it specifies which hierarchy should be used for performing additional validation steps, as the FOODEX.19 business rule. If omitted, the additional checks are skipped.
+  
+   checkReportability - Optional parameter, it specifies if the algorithm should check the term reportability, that is, if a not reportable term/facet is used then an error is raised (0/1 values). Note that this will evaluate the up-to-date reportability of terms, without taking into consideration the period of time in which the terms were reported. This makes these checks not applicable to historical data, where the reportability of terms could be different. By default, terms reportability is not checked (i.e. 0 value).
+
+  checkDeprecated - Optional parameter, it specifies if the algorithm should highlight the use of deprecated terms/facets as an error (0/1 values). Note that this will evaluate the up-to-date deprecated state of terms, without taking into consideration the period of time in which the terms were reported. This makes these checks not applicable to historical data, where deprecated terms could be different. By default, deprecated terms are not checked (i.e. 0 value).
+
   statistics - Optional parameter, it specifies if the algorithm performances should be evaluated or not while running the algorithm (0/1 values). By default, no statistics is computed (i.e. 0 value).
   
 
@@ -1401,7 +1409,7 @@ In the following there are presented the custom formats which were created for E
 ## **MTX Deprecated format**
 
 
-    imtxDeprecated.
+    MTX_DEPRECATED.
 
 Converts the code of an MTX term into a flag which identifies if the term is deprecated or not.
 
@@ -1409,19 +1417,19 @@ Converts the code of an MTX term into a flag which identifies if the term is dep
 
 Requires BRS_STG format library to be loaded.
 
-    options fmtsearch=(BRS_STG); /* Required to use BR formats for parents */
+    options fmtsearch=(FMTLIB); /* Required to use formats */
 
 **Examples:**
 
     data _null_;
-      deprecated = input("A000A", imtxDeprecated.); /* 0 */
+      deprecated = input("A000A", MTX_DEPRECATED.); /* 0, not deprecated */
     run;
 
 
 ## **MTX Detail level format**
 
 
-    $imtxDetailLevel.
+    $DETAILLEVEL_MTX.
 
 Converts the code of an MTX term into a character which identifies its detail level.
 
@@ -1429,11 +1437,30 @@ Converts the code of an MTX term into a character which identifies its detail le
 
 Requires BRS_STG format library to be loaded.
 
-    options fmtsearch=(BRS_STG); /* Required to use BR formats for parents */
+    options fmtsearch=(FMTLIB); /* Required to use formats */
 
 **Examples:**
 
     data _null_;
-      detailLevel = put("A000A", $imtxDetailLevel.); /* H */
+      detailLevel = put("A000A", $DETAILLEVEL_MTX.); /* H */
     run;
 
+## ** MTX Reportability format**
+
+	REP_MTX. for the master
+	REP_MTX_[hierarchyCode]. for other hierarchies
+
+Converts the code of an MTX term into a flag which identifies if the term is reportable or not in the specified hierarchy.
+
+**Dependencies**
+
+Requires FMTLIB format library to be loaded.
+
+    options fmtsearch=(FMTLIB); /* Required to use formats */
+
+**Examples**
+
+	data _null_;
+	  rep = input("A0B6Z", REP_MTX_REPORT.); /* 0, not reportable in reporting hierarchy */
+	  rep = input("A0B6Z", REP_MTX.); /* 1, reportable in master */
+	run;

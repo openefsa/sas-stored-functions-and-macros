@@ -186,7 +186,7 @@ run;
 		des="Split a string separated by the 'separator' variable. 
 			The macro will put at each iteration the current token in the 'token' variable. 
 			It needs to be closed by %endStringTokenizer";
-	
+
 	/* Create a random name for the iterator variable (avoid conflicts in nested loops) */
 	%local i;
 	%let i = %sysfunc(genRandomString(10));
@@ -194,7 +194,7 @@ run;
 	&i. = 1;
 	do until (scan(&string., &i., &separator.) = "");
 		&token. = scan(&string., &i., &separator.);
-		&i. = &i. + 1; 
+		&i. = &i. + 1;
 %mend;
 
 %macro endStringTokenizer / store source des="Close the %stringTokenizer statement";
@@ -261,18 +261,47 @@ endsub;
 
 /* Check if current term in the data step is a non specific term */
 function isNonSpecific(termCode $);
-	detailLevel = put(termCode, $imtxDetailLevel.);
+	detailLevel = put(termCode, $DETAILLEVEL_MTX.);
 	return(detailLevel = "P");
 endsub;
 run;
+
+%macro getReportability / store source des="Used in the isReportable FCMP function. Do not use directly!";
+	%global rep;
+	%let termCode = %sysfunc(dequote(&termCode.));
+	%let repFormat = %sysfunc(compress(&repFormat.));
+	%let repFormat = %sysfunc(dequote(&repFormat.));
+	data _null_;
+		reportability = inputn("&termCode.", "&repFormat.");
+		call symput('rep', reportability);
+	run;
+%mend;
 
 /*
  * Functions which handle MTX terms properties
  */
 proc fcmp outlib = MSTORE.mtx.terms;
 function isDeprecated(termCode $);
-	deprecated = input(termCode, imtxDeprecated.);
+	deprecated = input(termCode, DEPRECATED_MTX.);
 	return(deprecated);
+endsub;
+function isReportable(termCode $, hierarchyCode $);
+
+	length repFormat $100;
+
+	repFormat = "REP_MTX";
+
+	/* If not master, add hierarchy code */
+	if (upcase(hierarchyCode)^="MTX") then 
+		repFormat = compress(cat(repFormat, "_", upcase(hierarchyCode)));
+
+	/* add the format 'dot' */
+	repFormat = compress(cat(repFormat, "."));
+
+	reportability = inputn(termCode, repFormat);
+/*	rc = run_macro('getReportability', termCode, repFormat, reportability);*/
+
+	return(reportability);
 endsub;
 run;
 

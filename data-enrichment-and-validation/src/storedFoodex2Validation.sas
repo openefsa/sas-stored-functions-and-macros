@@ -238,13 +238,15 @@ run;
 Compute all the errors given a row composed of base term and facets and
 the domain hierarchy
 */
-%macro DEAV_INT_FX2V_EVAL_ERRORS(foodex_col /* name of the column which contains the initial foodex code */,
-			base_col /* name of the column which contains the base term code */, 
-			facets_col /* name of the column which contains all the explicit facets $ separated */, 
-			implicit_facets_col /* name of the column which contains all the implicit facets $ separated */, 
-			errorTable,
-			foodex19ConfigTable /* configuration table for FOODEX2.19 check */,
-			hierarchy /* The hierarchy of the domain */) / store source des="Check FOODEX2_VALIDATION errors";
+%macro DEAV_INT_FX2V_EVAL_ERRORS(foodex_col= /* name of the column which contains the initial foodex code */,
+			base_col= /* name of the column which contains the base term code */, 
+			facets_col= /* name of the column which contains all the explicit facets $ separated */, 
+			implicit_facets_col= /* name of the column which contains all the implicit facets $ separated */, 
+			errorTable=,
+			foodex19ConfigTable= /* configuration table for FOODEX2.19 check */,
+			check_not_reportable=0 /* if not reportable terms should be checked */,
+			check_deprecated=0 /* if deprecated terms should be checked */,
+			hierarchy= /* The hierarchy of the domain */) / store source des="Check FOODEX2_VALIDATION errors";
 
 	%local termTypeCol;
 	%let termTypeCol = TERMTYPE;
@@ -266,35 +268,37 @@ the domain hierarchy
 	end;
 
 	/* Check if base term is deprecated */
-	if (isDeprecated(&base_col.)) then do;
+	if (&check_deprecated. and isDeprecated(&base_col.) = 1) then do;
 		%DEAV_INT_ADD_FX2_ERROR("FOODEX2.20", "&foodex_col.", &errorTable., &base_col.);
 	end;
 
-	%iterateFacets(MERGED_FACETS, f, h, c)
+	%iterateFacets(compress(MERGED_FACETS), f, h, c)
 
-		/* Check if facet is deprecated */
-		if (isDeprecated(c)) then do;
-			%DEAV_INT_ADD_FX2_ERROR("FOODEX2.20", "&foodex_col.", &errorTable., f);
-		end;
-		
-		/* F01 for mixed derivative error */
-		if (isDerivative(&termTypeCol.) and SOURCE_COMM_COUNT_MERGED > 1 and h = "F01") then do;
-			%DEAV_INT_ADD_FX2_ERROR("FOODEX2.02", "&foodex_col.", &errorTable., f);
-		end;
+		if not missing(f) then do;
+			/* Check if facet is deprecated */
+			if (&check_deprecated. and isDeprecated(c) = 1) then do;
+				%DEAV_INT_ADD_FX2_ERROR("FOODEX2.20", "&foodex_col.", &errorTable., f);
+			end;
+			
+			/* F01 for mixed derivative error */
+			if (isDerivative(&termTypeCol.) and SOURCE_COMM_COUNT_MERGED > 1 and h = "F01") then do;
+				%DEAV_INT_ADD_FX2_ERROR("FOODEX2.02", "&foodex_col.", &errorTable., f);
+			end;
 
-		/* F01 for composite base term error */
-		if (isComposite(&termTypeCol.) and h = "F01") then do;
-			%DEAV_INT_ADD_FX2_ERROR("FOODEX2.03", "&foodex_col.", &errorTable., f);
-		end;
+			/* F01 for composite base term error */
+			if (isComposite(&termTypeCol.) and h = "F01") then do;
+				%DEAV_INT_ADD_FX2_ERROR("FOODEX2.03", "&foodex_col.", &errorTable., f);
+			end;
 
-		/* F27 for composite base term error */
-		if (isComposite(&termTypeCol.) and h = "F27") then do;
-			%DEAV_INT_ADD_FX2_ERROR("FOODEX2.04", "&foodex_col.", &errorTable., f);
-		end;
+			/* F27 for composite base term error */
+			if (isComposite(&termTypeCol.) and h = "F27") then do;
+				%DEAV_INT_ADD_FX2_ERROR("FOODEX2.04", "&foodex_col.", &errorTable., f);
+			end;
 
-		/* FOODEX2.06 - F01 for derivative without F27 error */
-		if (isDerivative(&termTypeCol.) and SOURCE_COMM_COUNT_MERGED = 0 and h = "F01") then do;
-			%DEAV_INT_ADD_FX2_ERROR("FOODEX2.06", "&foodex_col.", &errorTable., f);
+			/* FOODEX2.06 - F01 for derivative without F27 error */
+			if (isDerivative(&termTypeCol.) and SOURCE_COMM_COUNT_MERGED = 0 and h = "F01") then do;
+				%DEAV_INT_ADD_FX2_ERROR("FOODEX2.06", "&foodex_col.", &errorTable., f);
+			end;
 		end;
 
 	%endIterateFacets
@@ -311,16 +315,27 @@ the domain hierarchy
 		%let hierarchy = %sysfunc(dequote(&hierarchy.));
 
 		/* Only for the base term and if a hierarchy was selected */
-		if isReportable(&base_col., "&hierarchy.") then do;
+		if &check_not_reportable. and isReportable(&base_col., "&hierarchy.") = 0 then do;
 			%DEAV_INT_ADD_FX2_ERROR("FOODEX2.08", "&foodex_col.", &errorTable., &base_col.);
 		end;
 
+		putlog "checking facets: " &facets_col.;
+
 		/* Check reportability of explicit facets in their hierarchies */
-		%iterateFacets(&facets_col., f, h, c)
-			if isReportable(c, getHierarchyByAttributeCode("MTX", h)) then do;
-				%DEAV_INT_ADD_FX2_ERROR("FOODEX2.08", "&foodex_col.", &errorTable., f);
+		%iterateFacets(compress(&facets_col.), f, h, c)
+
+			if not missing(f) then do;
+
+				length attrHierarchy $4000;
+				attrHierarchy = getHierarchyByAttributeCode("MTX", h);
+
+				if &check_not_reportable. and isReportable(c, attrHierarchy) = 0 then do;
+					%DEAV_INT_ADD_FX2_ERROR("FOODEX2.08", "&foodex_col.", &errorTable., f);
+				end;
 			end;
+			drop attrHierarchy;
 		%endIterateFacets
+
 
 		/* check forbidden processes for raw commodities */
 		if (isRPC(&termTypeCol.)) then do;
@@ -412,7 +427,7 @@ the domain hierarchy
 	%DEAV_INT_SINGLE_TERM_WARNINGS(&foodex_col., &base_col., &base_col.);
 
 	/* Check for explicit facets */
-	%iterateFacets(&facets_col., f, h, c)
+	%iterateFacets(compress(&facets_col.), f, h, c)
 		%DEAV_INT_SINGLE_TERM_WARNINGS(&foodex_col., c, f);
 	%endIterateFacets
 
@@ -467,6 +482,8 @@ the domain hierarchy
 		foodex2Column= /* Name of the column which contains the FoodEx2 codes to validate */,
 		idColumns= /* List of space separated columns which identify a row of the inputTable */,
 		foodex2Hierarchy= /* Optional. Add checks related to a specific hierarchy */,
+		checkReportability=0 /* Check terms reportability. It requires the foodex2Hierarchy to be set */,
+		checkDeprecated=0 /* Check deprecated terms */,
 		statistics=0 /* 1=compute performance statistics for the algorithm, 0=no statistics is computed*/) 
 		/ store source des="Validate a list of FoodEx2 codes and returns errors in output";
 
@@ -531,8 +548,16 @@ the domain hierarchy
 
 			putlog "(" _N_"/" nobs") FoodEx2 validation: processing code " &foodex2Column.;
 
-			%DEAV_INT_FX2V_EVAL_ERRORS(&foodex2Column., BASE, CLEANED_EXPL_FACETS, &allFacetsCol., 
-					"&errorTable.", "BRS_STG.FOODEX2_19_VALIDATION_CONFIG", "&foodex2Hierarchy.");
+			%DEAV_INT_FX2V_EVAL_ERRORS(
+					foodex_col=&foodex2Column., 
+					base_col=BASE, 
+					facets_col=CLEANED_EXPL_FACETS, 
+					implicit_facets_col=&allFacetsCol., 
+					errorTable="&errorTable.",
+					foodex19ConfigTable="BRS_STG.FOODEX2_19_VALIDATION_CONFIG", 
+					check_not_reportable=&checkReportability.,
+					check_deprecated=&checkDeprecated.,
+					hierarchy="&foodex2Hierarchy.");
 
 			%DEAV_INT_FX2V_EVAL_WARNINGS(&foodex2Column., BASE, CLEANED_EXPL_FACETS, &allFacetsCol., "&errorTable.");
 		end;
