@@ -336,7 +336,9 @@ Validates a set of FoodEx2 codes and returns the errors/warnings.
   checkDeprecated - Optional parameter, it specifies if the algorithm should highlight the use of deprecated terms/facets as an error (0/1 values). Note that this will evaluate the up-to-date deprecated state of terms, without taking into consideration the period of time in which the terms were reported. This makes these checks not applicable to historical data, where deprecated terms could be different. By default, deprecated terms are not checked (i.e. 0 value).
 
   statistics - Optional parameter, it specifies if the algorithm performances should be evaluated or not while running the algorithm (0/1 values). By default, no statistics is computed (i.e. 0 value).
-  
+
+**Missing implementation**
+The procedure does not check if a term exist, it should be added. This leads also to a not always consistent deprecated check. For example, consider the case of A002M#F01.A002M. The code A002M does not exist in the F01 hierarchy, but an error will still be raised since the term itself is deprecated in general.
 
 **Dependencies:**
 Add this piece of code before calling the macro:
