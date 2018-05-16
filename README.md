@@ -250,7 +250,7 @@ Example of false assertion:
 	parValues=,
 	dcfId=ID,
 	datasetId=DATASET_ID,
-	uniqueIdentifier=RES_ID)
+	uniqueIdentifier=)
 
 Interface for applying a general data enrichment and validation step **inside the business rules engine**. It enriches and validates the *inputTable* according to the required *action.* Each action has its own set of parameters which must be specified in the *parNames* and *parValues* parameters. In particular, *parNames* contains the names of the parameters and *parValues* their values (in the same order! See examples for further details).
 
@@ -275,7 +275,7 @@ Interface for applying a general data enrichment and validation step **inside th
   
   datasetId - Name of the column of the input dataset containing the dataset id field. By default it is DATASET_ID.
 
-  uniqueIdentifier - Name of the column of the input dataset containing the record unique identifier field. By default it is RES_ID.
+  uniqueIdentifier - Name of the column of the input dataset containing the record unique identifier field.
     
 
 **Dependencies:**

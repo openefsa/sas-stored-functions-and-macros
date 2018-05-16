@@ -153,7 +153,7 @@ options mstored sasmstore=MSTORE;
 	parValues=,
 	dcfId=ID,
 	datasetId=DATASET_ID,
-	uniqueIdentifier=RES_ID) / store source des="Enrich and validate a dataset";
+	uniqueIdentifier=) / store source des="Enrich and validate a dataset";
 
 	options fmtsearch=(FMTLIB BRS_STG); /* Required to use BR formats for parents */
 	options cmplib=(MSTORE.strings MSTORE.catalogues MSTORE.mtx MSTORE.DEAV MSTORE.FOODEX2_VALIDATION MSTORE.tables);
