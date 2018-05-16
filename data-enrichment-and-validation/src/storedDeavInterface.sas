@@ -1,17 +1,17 @@
 
 options mstored sasmstore=MSTORE;
-%macro DEAV_INT_TO_BR_ERRORS(DEAV_errorTable, dcfId, datasetId, 
+%macro DEAV_INT_TO_BR_ERRORS(DEAV_errorTable, dcfId, datasetId, uniqueIdentifier,
 	BR_errorTable)
 	/ store source des="Convert the DEAV error table into a format suitable for business rules";
 
 	proc sort data=&DEAV_errorTable.;
-		by &dcfId. &datasetId. ERR_CODE ERR_MESSAGE ERR_TYPE;
+		by &dcfId. &datasetId. &uniqueIdentifier. ERR_CODE ERR_MESSAGE ERR_TYPE;
 	run;
 
 	proc transpose data=&DEAV_errorTable.
 	        out=&BR_errorTable.(drop=_NAME_);
 	  id ERR_COLUMN;
-	  by &dcfId. &datasetId. ERR_CODE ERR_MESSAGE ERR_TYPE;
+	  by &dcfId. &datasetId. &uniqueIdentifier. ERR_CODE ERR_MESSAGE ERR_TYPE;
 	  var ERR_VALUE;
 	run;
 
@@ -31,23 +31,23 @@ options mstored sasmstore=MSTORE;
 	run;
 %mend;
 
-%macro DEAV_INT_MOVE_TO_ORACLE(inputTable=, oracleTable=, dcfId=, datasetId=, enrichedCols=)
+%macro DEAV_INT_MOVE_TO_ORACLE(inputTable=, oracleTable=, dcfId=, datasetId=, uniqueIdentifier=, enrichedCols=)
 	/ store source des="Move the enriched columns to a transposed oracle table which can be used by the ETL";
 
 	/* Get only the enriched columns with dcf id and dataset id */
 	data DEAV_ENRICHED_COLS;
 		set &inputTable.;
-		keep &dcfId. &datasetId. &enrichedCols.;
+		keep &dcfId. &datasetId. &uniqueIdentifier. &enrichedCols.;
 	run;
 
 	/* sort for transposing */
 	proc sort data=DEAV_ENRICHED_COLS;
-		by &dcfId. &datasetId.;
+		by &dcfId. &datasetId. &uniqueIdentifier.;
 	run;
 
 	/* Transpose the enriched columns */
 	proc transpose data=DEAV_ENRICHED_COLS out=T_DEAV_ENRICHED_COLS(rename=(col1=VALUE)) name=F_C_NAME;
-		by &dcfId. &datasetId.;
+		by &dcfId. &datasetId. &uniqueIdentifier.;
 		var &enrichedCols.;
 	run;
 
@@ -86,9 +86,9 @@ options mstored sasmstore=MSTORE;
 	 * , to assign different sorting and attr_name. */
 	data T_DEAV_ENRICHED_COLS;
 
-		retain ID F_ID F_C_NAME ATTR_NAME VALUE SORTING DATASET_ID;
+		retain ID F_ID F_C_NAME ATTR_NAME VALUE SORTING DATASET_ID RECORD_UNIQUE_IDENTIFIER;
 
-		set T_DEAV_ENRICHED_COLS (rename=(&dcfId.=F_ID &datasetId.=DATASET_ID));
+		set T_DEAV_ENRICHED_COLS (rename=(&dcfId.=F_ID &datasetId.=DATASET_ID &uniqueIdentifier.=RECORD_UNIQUE_IDENTIFIER));
 
 		ID = _N_ + &maxId.;
 		
@@ -96,7 +96,8 @@ options mstored sasmstore=MSTORE;
 		SORTING = 1;
 
 		label ID = 'Row id' F_ID = 'Dcf id' F_C_NAME = 'Column name' ATTR_NAME = 'Attribute name for compounds'
-			VALUE = 'Column/attribute value' SORTING = 'Order of application of compound attributes' DATASET_ID = 'Dataset id';
+			VALUE = 'Column/attribute value' SORTING = 'Order of application of compound attributes' DATASET_ID = 'Dataset id' 
+			RECORD_UNIQUE_IDENTIFIER="Record unique identifier";
 	run;
 
 	/* Append transposed data to oracle table */
@@ -151,10 +152,17 @@ options mstored sasmstore=MSTORE;
 	parNames=,
 	parValues=,
 	dcfId=ID,
-	datasetId=DATASET_ID) / store source des="Enrich and validate a dataset";
+	datasetId=DATASET_ID,
+	uniqueIdentifier=RES_ID) / store source des="Enrich and validate a dataset";
+
+	options fmtsearch=(FMTLIB BRS_STG); /* Required to use BR formats for parents */
+	options cmplib=(MSTORE.strings MSTORE.catalogues MSTORE.mtx MSTORE.DEAV MSTORE.FOODEX2_VALIDATION MSTORE.tables);
 
 	%local isValid;
+	%local idColumns;
+
 	%let isValid = 1;
+	%let idColumns=&dcfId. &datasetId. &uniqueIdentifier.;
 
 	%local enrichedCols; /* Set for each enrichment the list space separated of columns which will be created (this will be used to transpose the output table) */
 
@@ -172,7 +180,7 @@ options mstored sasmstore=MSTORE;
 			%if &foodex2Column. ^= %str() %then %do;
 
 				%put NOTE: Validating FoodEx2 column = &foodex2Column.;
-				%DEAV_FOODEX2_VALIDATION(inputTable=&inputTable., outputTable=&outputTable., idColumns=&dcfId. &datasetId.,
+				%DEAV_FOODEX2_VALIDATION(inputTable=&inputTable., outputTable=&outputTable., idColumns=&idColumns.,
 					foodex2Column=&foodex2Column., foodex2Hierarchy=&foodex2Hierarchy.);
 			%end;
 			%else %put ERROR: Cannot validate FoodEx2, missing parameter foodex2Column;
@@ -190,7 +198,7 @@ options mstored sasmstore=MSTORE;
 				%let enrichedCols = &matrixColumn.;
 	
 				%DEAV_FOODEX2_TO_MATRIX(inputTable=&inputTable., outputTable=&outputTable., 
-					foodex2Column=&foodex2Column., matrixColumn=&matrixColumn., idColumns=&dcfId. &datasetId.);
+					foodex2Column=&foodex2Column., matrixColumn=&matrixColumn., idColumns=&idColumns.);
 			%end;
 			%else %put ERROR: Cannot map FoodEx2 to matrix, either foodex2Column or matrixColumn is missing. Found FoodEx = &foodex2Column. Matrix = &matrixColumn.;
 		%end;
@@ -202,12 +210,12 @@ options mstored sasmstore=MSTORE;
 		%end;
 
 		/* If valid macro call convert error table into BR format */
-		%if &isValid. %then %DEAV_INT_TO_BR_ERRORS(&outputTable., &dcfId., &datasetId., &outputTable.);
+		%if &isValid. %then %DEAV_INT_TO_BR_ERRORS(&outputTable., &dcfId., &datasetId., &uniqueIdentifier., &outputTable.);
 
 		/* If valid macro call for enrichment, append/create table also in ORACLE */
 		%if &isValid. and &enrichedCols. ^= %str() %then %do;
 			%DEAV_INT_MOVE_TO_ORACLE(inputTable=&inputTable., oracleTable=ODS.DEAV_ENRICHMENT_TABLE,
-					dcfId=&dcfId., datasetId=&datasetId., enrichedCols=&enrichedCols.);
+					dcfId=&dcfId., datasetId=&datasetId., uniqueIdentifier=&uniqueIdentifier., enrichedCols=&enrichedCols.);
 		%end;
 	%end;
 	%else %put ERROR: Cannot apply enrichment and validation. Missing at least one parameter among inputTable, errorTable and action;

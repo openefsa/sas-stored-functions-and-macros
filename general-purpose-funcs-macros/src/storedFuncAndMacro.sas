@@ -548,7 +548,7 @@ run;
 %macro getRecordUniqueIdColumn / store source des="Used in the getUniqueIdentifierColumn FCMP function. Do not use directly!";
 
 	%let dataCollectionCode = %sysfunc(dequote(&dataCollectionCode.));
-	%let tableName = %sysfunc(dequote(&tableName.));
+	%let deav_tableName = %sysfunc(dequote(&deav_tableName.));
 
 	proc sql noprint;
 		select distinct dm.COLUMNNAME
@@ -565,14 +565,14 @@ run;
 	        left join catalog.CATALOGUE cat1 on h1.CATALOGUE_ID = cat1.ID
 	        left join catalog.HIERARCHY h2 on h2.ID = pmc.H_ID
 	        left join catalog.CATALOGUE cat2 on h2.CATALOGUE_ID = cat2.ID
-		where dc.COLLECTIONTYPE = 'F' and dc.CODE = "&dataCollectionCode." and d.TABLENAME = "&tableName." and ISUNIQUEIDENTIFIER = "1";
+		where dc.COLLECTIONTYPE = 'F' and dc.CODE = "&dataCollectionCode." and d.deav_tableName = "&deav_tableName." and ISUNIQUEIDENTIFIER = "1";
 	quit;
 %mend;
 
 %macro getHierarchyFromColumn / store source des="Used in the getHierarchyFromColumn FCMP function. Do not use directly!";
 
 	%let dataCollectionCode = %sysfunc(dequote(&dataCollectionCode.));
-	%let tableName = %sysfunc(dequote(&tableName.));
+	%let deav_tableName = %sysfunc(dequote(&deav_tableName.));
 	%let columnName = %sysfunc(dequote(&columnName.));
 
 	proc sql noprint;
@@ -591,7 +591,7 @@ run;
 	        left join catalog.CATALOGUE cat1 on h1.CATALOGUE_ID = cat1.ID
 	        left join catalog.HIERARCHY h2 on h2.ID = pmc.H_ID
 	        left join catalog.CATALOGUE cat2 on h2.CATALOGUE_ID = cat2.ID
-		where dc.COLLECTIONTYPE = 'F' and dc.CODE = "&dataCollectionCode." and d.TABLENAME = "&tableName." and dm.COLUMNNAME = "&columnName.";
+		where dc.COLLECTIONTYPE = 'F' and dc.CODE = "&dataCollectionCode." and d.TABLENAME = "&deav_tableName." and dm.COLUMNNAME = "&columnName.";
 	quit;
 %mend;
 
@@ -599,20 +599,20 @@ run;
 proc fcmp outlib = MSTORE.dcf.dcf;
 
 /* Get the hierarchy code related to a specific column inside a table inside a data collection */
-function getHierarchyFromColumn(dataCollectionCode $, tableName $, columnName $) $;
+function getHierarchyFromColumn(dataCollectionCode $, deav_tableName $, columnName $) $;
 
 	length hierarchyCode $ 4000;
 
-	rc = run_macro('getHierarchyFromColumn', dataCollectionCode, tableName, columnName, hierarchyCode);
+	rc = run_macro('getHierarchyFromColumn', dataCollectionCode, deav_tableName, columnName, hierarchyCode);
 	
 	return(compress(hierarchyCode));
 endsub;
 
-function getUniqueIdentifierColumn(dataCollectionCode $, tableName $) $;
+function getUniqueIdentifierColumn(dataCollectionCode $, deav_tableName $) $;
 
 	length uniqueIdentifier $ 4000;
 
-	rc = run_macro('getRecordUniqueIdColumn', dataCollectionCode, tableName, uniqueIdentifier);
+	rc = run_macro('getRecordUniqueIdColumn', dataCollectionCode, deav_tableName, uniqueIdentifier);
 	
 	return(compress(uniqueIdentifier));
 endsub;
@@ -646,19 +646,19 @@ run;
 
 %macro getNobs / store source des="Used in the getNobs FCMP function. Do not use directly!";
 
-	%let tableName = %sysfunc(dequote(&tableName.));
+	%let deav_tableName = %sysfunc(dequote(&deav_tableName.));
 
 	proc sql noprint;
 		select count(*) into :nobs
-		from &tableName.;
+		from &deav_tableName.;
 	run;
 %mend;
 
 proc fcmp outlib = MSTORE.tables.queries;
 
 /* Get the number of rows of a table */
-function getNobs(tableName $);
-	rc = run_macro('getNobs', tableName, nobs);
+function getNobs(deav_tableName $);
+	rc = run_macro('getNobs', deav_tableName, nobs);
 	return(nobs);
 endsub;
 run;

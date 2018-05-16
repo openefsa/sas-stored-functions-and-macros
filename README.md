@@ -243,11 +243,14 @@ Example of false assertion:
 
 
     %macro DEAV_ENRICH_AND_VALIDATE(
-            inputTable=, 
-            outputTable=,
-            action=, 
-            parNames=,
-            parValues=)
+	inputTable=, 
+	outputTable=,
+	action=, 
+	parNames=,
+	parValues=,
+	dcfId=ID,
+	datasetId=DATASET_ID,
+	uniqueIdentifier=RES_ID)
 
 Interface for applying a general data enrichment and validation step **inside the business rules engine**. It enriches and validates the *inputTable* according to the required *action.* Each action has its own set of parameters which must be specified in the *parNames* and *parValues* parameters. In particular, *parNames* contains the names of the parameters and *parValues* their values (in the same order! See examples for further details).
 
@@ -267,6 +270,12 @@ Interface for applying a general data enrichment and validation step **inside th
     - matrixColumn, used to specify a matrix code column. For example, this can be used for the FoodEx2 to matrix mapping.
     
   parValues - Macro variable, list of comma separated values of the passed parameters listed in *parNames*. The order must be the same, that is, the first value in *parValues* is the value of the parameter named in the first value of *parNames.* Note that since it is a comma separated list, it requires the %quote statement to be passed as input.
+
+  dcfId - Name of the column of the input dataset containing the DCF id field. By default, it is ID.
+  
+  datasetId - Name of the column of the input dataset containing the dataset id field. By default it is DATASET_ID.
+
+  uniqueIdentifier - Name of the column of the input dataset containing the record unique identifier field. By default it is RES_ID.
     
 
 **Dependencies:**
