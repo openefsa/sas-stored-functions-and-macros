@@ -266,17 +266,6 @@ function isNonSpecific(termCode $);
 endsub;
 run;
 
-%macro getReportability / store source des="Used in the isReportable FCMP function. Do not use directly!";
-	%global rep;
-	%let termCode = %sysfunc(dequote(&termCode.));
-	%let repFormat = %sysfunc(compress(&repFormat.));
-	%let repFormat = %sysfunc(dequote(&repFormat.));
-	data _null_;
-		reportability = inputn("&termCode.", "&repFormat.");
-		call symput('rep', reportability);
-	run;
-%mend;
-
 /*
  * Functions which handle MTX terms properties
  */
@@ -299,7 +288,6 @@ function isReportable(termCode $, hierarchyCode $);
 	repFormat = compress(cat(repFormat, "."));
 
 	reportability = inputn(termCode, repFormat);
-/*	rc = run_macro('getReportability', termCode, repFormat, reportability);*/
 
 	return(reportability);
 endsub;
