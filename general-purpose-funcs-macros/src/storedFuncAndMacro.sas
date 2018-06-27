@@ -331,7 +331,11 @@ function countFacets(facets $ /* list of facets */, facetHeader $ /* header of t
 	
 	/* handle exceptional cases */
 	if (missing(facets) or missing(facetHeader)) then do;
+<<<<<<< HEAD
 		if (&debug.) then put "WARNING: countFacets: either facets or facetHeader argument is empty. Returning 0";
+=======
+		put "WARNING: countFacets: either facets or facetHeader argument is empty. Returning 0";
+>>>>>>> dfcbcd5d37c21bf8d5f8261f2dbb92e43b6e3bc8
 		return(0);
 	end;
 
@@ -529,7 +533,11 @@ function addImplicitFacets(explicits $, implicits $) $ 4000;
 		%endIterateFacets
 	%endIterateFacets
 
+<<<<<<< HEAD
 	return(getDistinctFacets(mergedFacets));
+=======
+	return(mergedFacets);
+>>>>>>> dfcbcd5d37c21bf8d5f8261f2dbb92e43b6e3bc8
 endsub;
 run;
 
