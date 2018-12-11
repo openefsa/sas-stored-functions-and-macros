@@ -1,13 +1,35 @@
-<<<<<<< HEAD
 %let debug = 0;  /* 1 = enable dubug messages, 0 = disable (it is needed to recompile all the functions if changed) */
+/*
+options mstored sasmstore=MSTORE;
 
+%Sysmstoreclear;
+*/
 options mstored sasmstore=MSTORE;
 options fmtsearch=(FMTLIB BRS_STG); * Required to use BR formats for parents ;
 options cmplib=(MSTORE.strings MSTORE.catalogues MSTORE.mtx MSTORE.dcf MSTORE.DEAV MSTORE.FOODEX2_VALIDATION MSTORE.tables MSTORE.MAPPING_MATRIX);
 
 
+%macro send_email(toAddress=, ccAddress=, subject=, message=, attachFile=) / store source des="Utility macro for sending emails";
 
+                filename mail_dm email;
+                data _null_;
+                                file mail_dm
+                                                to=("&toAddress.")
+                                %if ("&ccAddress." ne "") %then %do;
+                                                cc=("&ccAddress.")
+                                %end;
+                                                subject="SASJOBS Automated Mail: &subject"
+                                %if ("&attachFile." ne "") %then %do;
+                                               attach=("&attachFile.")
+                                %end;
+                                ;
+                                put &message.;
+                                put ;
+                                
+                                /*%if ("&logFileStorage" ne "") %then %do;*/ put "See Log for details."; /*%end;*/
+                run;
 
+%mend send_email;
 
 %macro DEAV_FOODEX2_TO_MATRIX(inputTable= /* Input table */, 
 		outputTable= /* Table where errors and warnings will be put */,
@@ -70,8 +92,47 @@ options cmplib=(MSTORE.strings MSTORE.catalogues MSTORE.mtx MSTORE.dcf MSTORE.DE
 	%let n_err=&sqlobs;
 	
 	%if &n_err>0 %then %do;
+
+
+		/* if the input table contains a dataset_id columns, then include in the error table the column*/
+		proc contents data=&inputTable. out=contents_input;
+		run;
+
+		proc sql;
+			select * from contents_input where upcase(name) = "DATASET_ID";
+		quit;
+
+		%let dataset_exists=&sqlobs.;
+
+		%if &dataset_exists.>0 %then %do;
+			proc sql;
+				select distinct dataset_id into :ds_id_tmp1-
+				from &inputTable.
+			quit;
+
+			data mapping_applied_err;
+				set mapping_applied_err;
+				/* add the first dataset_id, in case of more then one dataset_id only the first one is kept*/
+				DATASET_ID=&ds_id_tmp1.;
+				TIMESTAMP=datetime();
+				format TIMESTAMP datetime20.;
+			run;
+		%end;
+
+
+
 		* send e-mail with the mapping errors;
-		************************** ADD THE CODE;
+		%let toid=Data.ETL@efsa.europa.eu;
+		%let toid2=Valentina.BOCCA@efsa.europa.eu;
+
+		%let currenttime=%sysfunc(compress(%sysfunc(tranwrd(%sysfunc(datetime()),%quote(.),%quote()))));
+		%put currenttime = &currenttime.;
+		
+		%let exportfile=\\Efsa.eu.int\fileserver\SASOperational\DataShare\Data\DATA\SSD2\Errors_MATRIX_mapping\foodex2codes_w_errors_&currenttime..xlsx;	
+		proc export data=mapping_applied_err dbms=xlsx outfile=%str("&exportfile.");
+		quit;
+		
+		%send_email(toAddress=&toid.,ccAddress=&toid2.,subject=Warning: MATRIX mapping failed, message="MTX codes with issues are stored in &exportfile.",attachFile= );
 
 		* this is a global macro variable of the business rules engine;
 		* setting this macro variable to 1 means that this external process had some error ; 
@@ -108,44 +169,12 @@ options cmplib=(MSTORE.strings MSTORE.catalogues MSTORE.mtx MSTORE.dcf MSTORE.DE
 	run;
 
 	/* Merge the results in the output table */
-=======
-options mstored sasmstore=MSTORE;
-
-%macro DEAV_FOODEX2_TO_MATRIX(inputTable= /* Input table */, 
-		outputTable= /* Table where errors and warnings will be put */,
-		foodex2Column= /* Name of the column which contains the FoodEx2 codes to validate */,
-		matrixColumn= /* Name of the column which will be created containing the matrix code */,
-		idColumns= /* List of space separated columns which identify a row of the inputTable */,
-		statistics=0 /*Optional, 1=compute performance statistics*/)
-	/ store source des="Map FoodEx2 to matrix code";
-
-	data INPUT_WITH_IDS;
-		set &inputTable.;
-		keep &idColumns. &foodex2Column.;
-	run;
-
-	%local errorTable;
-	%let errorTable = DEAV_FOODEX2_TO_MATRIX_ERR;
-
-	/* Delete the error table if already exists */
-	%deleteDataset(&errorTable.);
-
-	%DEAV_CREATE_EMPTY_ERR_TABLE(&errorTable.);
-
-	data &inputTable.;
-		set &inputTable.;
-		&matrixColumn. = "dummyMatrixCode";
-	run;
-
-	/* Merge the results in the output table (in order to have row identifiers in the error table ) */
->>>>>>> dfcbcd5d37c21bf8d5f8261f2dbb92e43b6e3bc8
 	proc sql noprint;
 		create table &outputTable. as
 		select input.*, e.ERR_CODE, e.ERR_TYPE, e.ERR_MESSAGE, e.ERR_COLUMN, e.ERR_VALUE
 		from &errorTable. e
 		inner join INPUT_WITH_IDS input
 		on input.&foodex2Column. = e.ERR_VALUE;
-<<<<<<< HEAD
 	run;
 
 
@@ -583,6 +612,7 @@ function getFoodEx1(foodex2Column $ /*foodex2 to be mapped to ssd1 product value
 	outargs	ERROR_message;
 	length 	ERROR_message $200
 			baseterm $5
+			baseterm_hier $500
 			foodex1 $15
 			i $3
 			;
@@ -590,6 +620,10 @@ function getFoodEx1(foodex2Column $ /*foodex2 to be mapped to ssd1 product value
 	* comupte the base term of the foodex2 code ;
 	baseterm=getBaseTermFromCode(foodex2Column);
 	baseterm_hier=put(baseterm,$EXPO_ccatLEVEL.);
+	if baseterm_hier="" then do;
+		baseterm_hier=put(baseterm,$FEED_ccatLEVEL.);
+	end;
+
 	i=1;
 	do until (compress(scan(baseterm_hier,i, "-","b"))="");
 
@@ -640,6 +674,11 @@ function getMatrix(foodex2Column $ /*foodex2 to be mapped to ssd1 product values
 	implicit_facets=getFacetsFromCode(allfacets);
 	MERGED_FACETS = addImplicitFacets(facetslist,implicit_facets);
 
+
+	*if the base term is part of the feed hierarchy;
+	if compress(put(baseterm,$FEED_ccatLEVEL.))^="" then do;
+		return("P1200000A");
+	end;
 
 
 	* look in the parent codes (exposure hierarchy) of the base term for the code A03PV (babyfood) ;
@@ -725,16 +764,3 @@ run;
 
 
 
-=======
-
-		drop table &errorTable.;
-		drop table INPUT_WITH_IDS;
-	run;
-
-	/* remove foodex2 column because it is not needed in the error table */
-	data &outputTable.;
-		set &outputTable.;
-		drop &foodex2Column.;
-	run;
-%mend;
->>>>>>> dfcbcd5d37c21bf8d5f8261f2dbb92e43b6e3bc8

@@ -26,6 +26,8 @@ options mstored sasmstore=MSTORE;
 	run;
 %mend writeErrorTo;
 
+
+
 options cmplib=MSTORE.DEAV;
 proc fcmp outlib = MSTORE.DEAV.validation;
 
@@ -34,7 +36,7 @@ function writeErrorTo(id /* identifier of the validated row, e.g. row number */,
 	code $ /* error code */, message $ /* error message */, 
 	type $ /* error type */, errorTable $ /* name of the error table */, 
 	columns[*] $ /* list of columns names involved in the error */, 
-	values[*] $ /* values of the columns involved in the error (same order as 'columns' */) varargs;
+	values[*] $ /* values of the columns involved in the error (same order as 'columns' */);
 
 	length column $500;
 	length value $500;
@@ -51,3 +53,4 @@ function writeErrorTo(id /* identifier of the validated row, e.g. row number */,
 	return(1);
 endsub;
 run;
+

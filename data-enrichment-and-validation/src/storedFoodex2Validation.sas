@@ -16,7 +16,7 @@ options cmplib=(MSTORE.strings MSTORE.catalogues MSTORE.mtx MSTORE.DEAV MSTORE.F
 /* Get the error message starting from the code */
 %macro DEAV_INT_GET_ERROR_MESSAGE(errorCode) / store source des="Mapping between FoodEx2 validation error code and message";
 
-	%if(&errorCode = "FOODEX2.01") %then "Single source commodity is not allowed in raw primary commodity. Only multiple source commodities are allowed, for mixed raw commodities";
+	%if(&errorCode = "FOODEX2.01") %then "Single source commodity is not allowed in raw primary commodity. Only multiple source commodities are allowed for mixed raw commodities";
 	%else %if(&errorCode = "FOODEX2.02") %then "The source facet is not allowed in mixed derivatives";
 	%else %if(&errorCode = "FOODEX2.03") %then "The source facet is not allowed in composite food";
 	%else %if(&errorCode = "FOODEX2.04") %then "The source commodity facet is not allowed in composite food";

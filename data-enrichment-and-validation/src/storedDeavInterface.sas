@@ -59,11 +59,7 @@ options mstored sasmstore=MSTORE;
 
 		/* Get max to set new IDs for the new rows */
 		proc sql;
-<<<<<<< HEAD
 			select coalesce(max(ID),0) into :maxId from &oracleTable.;
-=======
-			select max(ID) into :maxId from &oracleTable.;
->>>>>>> dfcbcd5d37c21bf8d5f8261f2dbb92e43b6e3bc8
 		run;
 
 		/* Delete old rows if related to the same dataset */
@@ -160,11 +156,7 @@ options mstored sasmstore=MSTORE;
 	uniqueIdentifier=) / store source des="Enrich and validate a dataset";
 
 	options fmtsearch=(FMTLIB BRS_STG); /* Required to use BR formats for parents */
-<<<<<<< HEAD
 	options cmplib=(MSTORE.strings MSTORE.catalogues MSTORE.mtx MSTORE.dcf MSTORE.DEAV MSTORE.FOODEX2_VALIDATION MSTORE.tables MSTORE.MAPPING_MATRIX);
-=======
-	options cmplib=(MSTORE.strings MSTORE.catalogues MSTORE.mtx MSTORE.DEAV MSTORE.FOODEX2_VALIDATION MSTORE.tables);
->>>>>>> dfcbcd5d37c21bf8d5f8261f2dbb92e43b6e3bc8
 
 	%local isValid;
 	%local idColumns;
@@ -199,19 +191,15 @@ options mstored sasmstore=MSTORE;
 
 			%let foodex2Column = %DEAV_INT_GET_PARAMETER(names=&parNames.,values=&parValues.,name=foodex2Column);
 			%let matrixColumn = %DEAV_INT_GET_PARAMETER(names=&parNames.,values=&parValues.,name=matrixColumn);
-<<<<<<< HEAD
 			%let prodTrColumn = %DEAV_INT_GET_PARAMETER(names=&parNames.,values=&parValues.,name=prodTrColumn);
 			%let prodMdColumn = %DEAV_INT_GET_PARAMETER(names=&parNames.,values=&parValues.,name=prodMdColumn);
 			%let prodPacColumn = %DEAV_INT_GET_PARAMETER(names=&parNames.,values=&parValues.,name=prodPacColumn);
 			%let foodex1Column = %DEAV_INT_GET_PARAMETER(names=&parNames.,values=&parValues.,name=foodex1Column);
 
-=======
->>>>>>> dfcbcd5d37c21bf8d5f8261f2dbb92e43b6e3bc8
 
 			%if &foodex2Column. ^= %str() and &matrixColumn. ^= %str() %then %do;
 
 				%put NOTE: Mapping FoodEx2 column = &foodex2Column. to matrix column = &matrixColumn.;
-<<<<<<< HEAD
 				%let enrichedCols = &matrixColumn. &prodTrColumn. &prodMdColumn. &prodPacColumn. &foodex1Column.;
 	
 				%DEAV_FOODEX2_TO_MATRIX(inputTable=&inputTable., outputTable=&outputTable., 
@@ -222,12 +210,6 @@ options mstored sasmstore=MSTORE;
 					prodPacColumn=&prodPacColumn.,
 					foodex1Column=&foodex1Column.,
 					idColumns=&idColumns.);
-=======
-				%let enrichedCols = &matrixColumn.;
-	
-				%DEAV_FOODEX2_TO_MATRIX(inputTable=&inputTable., outputTable=&outputTable., 
-					foodex2Column=&foodex2Column., matrixColumn=&matrixColumn., idColumns=&idColumns.);
->>>>>>> dfcbcd5d37c21bf8d5f8261f2dbb92e43b6e3bc8
 			%end;
 			%else %put ERROR: Cannot map FoodEx2 to matrix, either foodex2Column or matrixColumn is missing. Found FoodEx = &foodex2Column. Matrix = &matrixColumn.;
 		%end;
@@ -239,14 +221,10 @@ options mstored sasmstore=MSTORE;
 		%end;
 
 		/* If valid macro call convert error table into BR format */
-<<<<<<< HEAD
 		%if %sysfunc(exist(&outputTable.)) %then %do;
 			%if &isValid. %then %DEAV_INT_TO_BR_ERRORS(&outputTable., &dcfId., &datasetId., &uniqueIdentifier., &outputTable.);
 		%end;
 
-=======
-		%if &isValid. %then %DEAV_INT_TO_BR_ERRORS(&outputTable., &dcfId., &datasetId., &uniqueIdentifier., &outputTable.);
->>>>>>> dfcbcd5d37c21bf8d5f8261f2dbb92e43b6e3bc8
 
 		/* If valid macro call for enrichment, append/create table also in ORACLE */
 		%if &isValid. and &enrichedCols. ^= %str() %then %do;
