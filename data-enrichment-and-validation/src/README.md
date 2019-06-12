@@ -15,3 +15,7 @@ It contains the FoodEx2 to matrix data enrichment step.
 ## storedFoodex2Validation
 
 It contains the procedure to validate FoodEx2 codes.
+
+## storedGetChemMonDomain
+
+It contains the procedure to getting domain flags from Paramcode and ProgLegRef in SSD2.

@@ -127,8 +127,8 @@ options cmplib=(MSTORE.strings MSTORE.catalogues MSTORE.mtx MSTORE.dcf MSTORE.DE
 
 		%let currenttime=%sysfunc(compress(%sysfunc(tranwrd(%sysfunc(datetime()),%quote(.),%quote()))));
 		%put currenttime = &currenttime.;
-		
-		%let exportfile=\\Efsa.eu.int\fileserver\SASOperational\DataShare\Data\DATA\SSD2\Errors_MATRIX_mapping\foodex2codes_w_errors_&currenttime..xlsx;	
+		/* &server_path is a custom macro variable created in the autoexec */
+		%let exportfile=&server_path.\DataShare\Data\DATA\SSD2\Errors_MATRIX_mapping\foodex2codes_w_errors_&currenttime..xlsx;	
 		proc export data=mapping_applied_err dbms=xlsx outfile=%str("&exportfile.");
 		quit;
 		
@@ -158,6 +158,9 @@ options cmplib=(MSTORE.strings MSTORE.catalogues MSTORE.mtx MSTORE.dcf MSTORE.DE
 	%local errorTable;
 	%let errorTable = DEAV_MAPPING_MATRIX_ERR;
 
+/**************************/
+/*GDP: I don't understand this piece of code... it seems that it creates a dummy table &outputtable. */
+
 	* Delete and recreate the error table if already exists ;
 	%deleteDataset(&errorTable.);
 	%DEAV_CREATE_EMPTY_ERR_TABLE(&errorTable.);
@@ -177,6 +180,7 @@ options cmplib=(MSTORE.strings MSTORE.catalogues MSTORE.mtx MSTORE.dcf MSTORE.DE
 		on input.&foodex2Column. = e.ERR_VALUE;
 	run;
 
+/**************************/
 
 
 
@@ -231,6 +235,11 @@ function toMatrix(MTXterm $ /*MTX term to be mapped to the matrix catalog*/,
 			end;
 			else if index(MatrixCode,"-")>0 then do;
 				MatrixCode=scan(MatrixCode,1,"-");
+				goto matrixcodefound;
+			end;
+			* if the last three numbers are 010 then switch with 000 and got to the beginning;
+			else if substr(MatrixCode,length(MatrixCode)-2,3)="010" then do;
+				MatrixCode=CATT(substr(MatrixCode,1,length(MatrixCode)-3),"000");
 				goto matrixcodefound;
 			end;
 			else do;
@@ -619,10 +628,17 @@ function getFoodEx1(foodex2Column $ /*foodex2 to be mapped to ssd1 product value
 
 	* comupte the base term of the foodex2 code ;
 	baseterm=getBaseTermFromCode(foodex2Column);
+
+
+	*get hierarchy. priority list: EXPO, FEED, REPORT;
 	baseterm_hier=put(baseterm,$EXPO_ccatLEVEL.);
 	if baseterm_hier="" then do;
 		baseterm_hier=put(baseterm,$FEED_ccatLEVEL.);
 	end;
+	if baseterm_hier="" then do;
+		baseterm_hier=put(baseterm,$REPORT_ccatLEVEL.);
+	end;
+
 
 	i=1;
 	do until (compress(scan(baseterm_hier,i, "-","b"))="");
@@ -665,6 +681,10 @@ function getMatrix(foodex2Column $ /*foodex2 to be mapped to ssd1 product values
 	if index(foodex2Column,"F20.A0F4V")>0 then Excluding_visible_fat_flag=1;
 	else Excluding_visible_fat_flag=0;
 	
+
+	* if the facet F21.A07RY 'Wild or gathered or hunted' is explicitely reported, then the matrix code will be P1070000A, wild terrestrial vertebrate animals;
+	if index(foodex2Column,"F21.A07RY")>0 then return("P1070000A");
+
 	* comupte the base term of the foodex2 code ;
 	baseterm=getBaseTermFromCode(foodex2Column);
 	facetslist=getFacetsFromCode(foodex2Column);
